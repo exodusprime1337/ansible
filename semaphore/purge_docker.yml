@@ -2,6 +2,7 @@
   hosts: servers
   become: yes
   gather_facts: yes
+  remote_user: ansible
 
   tasks:
     - name: Check for docker binary

@@ -17,6 +17,3 @@
       ansible.builtin.stat:
         path: /opt/beszel-agent/run-update.sh
       register: script_file
-    - name: Run beszen update script if needed
-      ansible.builtin.command: /opt/beszel-agent/run-update.sh
-      when: script_file.stat.exists
