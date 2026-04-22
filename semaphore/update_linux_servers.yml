@@ -35,7 +35,7 @@
         msg: "Reboot initiated by Ansible after updates"
         reboot_timeout: 900
       when:
-        - ansible_host != '192.168.2.50'
+        # - ansible_host != '192.168.2.50'
         - reboot_required is defined
         - reboot_required.stat.exists | default(false)
           or reboot_required.rc | default(0) == 1
