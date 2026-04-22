@@ -1,0 +1,18 @@
+- name: Prune Docker system and volumes
+  hosts: servers
+  become: yes
+  gather_facts: yes
+
+  tasks:
+    - name: Check for docker binary
+      ansible.builtin.shell: which docker
+      register: docker_check
+      failed_when: docker_check.rc >= 2
+
+    - name: Run docker system prune (remove unused containers, networks, images, build cache)
+      ansible.builtin.shell: docker system prune -f
+      when: docker_check.rc == 0
+
+    - name: Run docker volume prune (remove unused volumes)
+      ansible.builtin.shell: docker volume prune -f
+      when: docker_check.rc == 0

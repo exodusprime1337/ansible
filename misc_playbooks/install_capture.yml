@@ -1,0 +1,63 @@
+---
+- name: Install Capture Monitor
+  hosts: all
+  remote_user: ansible
+  become: true
+  become_method: sudo
+  vars:
+    capture_file: capture_1.0.1_linux_amd64.tar.gz
+    capture_file_url: https://github.com/bluewave-labs/capture/releases/download/v1.0.1/capture_1.0.1_linux_amd64.tar.gz
+    api_secret: Rjesiji5!
+  tasks:
+    - name: Install WGET
+      ansible.builtin.package:
+        name: wget
+        state: present
+    - name: Download Capture Binary
+      get_url: url={{capture_file_url}}
+        dest=./{{capture_file}}
+    - name: Extract Capture Binary
+      shell: |
+        tar xvf ./{{capture_file}} -C /usr/local/bin
+    - name: Create Node Exporter Service
+      vars:
+        service_text: |
+          [Unit]
+          Description=Capture Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          ExecStart=/usr/local/bin/capture
+          Restart=on-failure
+          EnvironmentFile=/etc/capture.env
+          User=captureuser
+          Group=captureuser
+
+          [Install]
+          WantedBy=multi-user.target
+      copy:
+        dest: /etc/systemd/system/capture.service
+        content: "{{ service_text }}"
+    - name: Create Capture environment variable
+      vars:
+        environ_text: |
+          API_SECRET={{api_secret}}
+      copy:
+        dest: /etc/capture.env
+        content: "{{ environ_text }}"
+    - name: Create Capture User and chown files
+      shell: |
+        useradd -r -s /usr/sbin/nologin captureuser
+        chown root:root /etc/capture.env
+        chmod 600 /etc/capture.env
+    - name: Enable and start Capture
+      shell: |
+        systemctl daemon-reexec
+        systemctl daemon-reload
+        systemctl enable capture.service
+        systemctl start capture.service
+    - name: Remove file (delete file)
+      ansible.builtin.file:
+        path: ./{{ capture_file }}
+        state: absent

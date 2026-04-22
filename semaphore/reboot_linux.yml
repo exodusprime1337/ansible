@@ -1,0 +1,17 @@
+---
+- name: Reboot Linux Servers
+  hosts: servers
+  remote_user: ansible
+  become: true
+  gather_facts: yes
+  #become_method: sudo
+  tasks:
+    - name: Unconditionally reboot the machine with all defaults
+      ansible.builtin.reboot:
+    - name: Wait for the machine to come back online
+      wait_for_connection:
+        connect_timeout: 60
+        sleep: 5
+        delay: 5
+        timeout: 300
+      when: ansible_host != '192.168.2.50'

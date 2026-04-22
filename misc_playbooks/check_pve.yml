@@ -1,0 +1,9 @@
+---
+- name: Check PVE stuff
+  hosts: proxmox
+  become: true
+  tasks:
+    - name: echo user
+      shell: echo $USER
+
+

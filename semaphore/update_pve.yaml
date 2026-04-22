@@ -1,0 +1,22 @@
+---
+- name: Update Proxmox Servers
+  hosts: hypervisors
+  remote_user: ansible
+  become: true
+  tasks:
+    - name: Update apt cache
+      tags: always
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+    - name: Upgrade Proxmox packages (non-interactive)
+      tags: always
+      ansible.builtin.apt:
+        upgrade: dist
+    - name: Check if beszel exists
+      ansible.builtin.stat:
+        path: /opt/beszel-agent/run-update.sh
+      register: script_file
+    - name: Run beszen update script if needed
+      ansible.builtin.command: /opt/beszel-agent/run-update.sh
+      when: script_file.stat.exists

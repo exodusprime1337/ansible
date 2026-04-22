@@ -1,0 +1,30 @@
+---
+- name: Update Linux Servers
+  hosts: servers
+  remote_user: ansible
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Update Package Cache (apt/Ubuntu)
+      tags: always
+      apt:
+        update_cache: yes
+      changed_when: false
+      when: ansible_distribution == "Ubuntu"
+    - name: Update Package Cache (dnf/CentOS)
+      tags: always
+      dnf:
+        update_cache: yes
+      changed_when: false
+      when: ansible_distribution == "CentOS"
+    - name: Fully update OS packages
+      package:
+        name: "*"
+        state: latest
+    - name: Creating user "kenny" with admin access
+      user: 
+        name: kenny
+        password: "$6$Z8Rrjb9ohr5A$INUtm3PxXQIEnB1OhP85FGSzom9bfZiEca.ETgXrEVdsAmmLseg28T5CWvNfQa1Llw772gbTx1gFOZdsMz1Ai/"
+        groups: sudo
+        shell: /bin/bash
+        append: yes

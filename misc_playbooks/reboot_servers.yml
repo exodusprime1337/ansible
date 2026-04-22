@@ -1,0 +1,7 @@
+---
+- name: Update Linux Servers
+  hosts: servers
+  become: true
+  tasks:
+    - name: Reboot Host
+      ansible.builtin.reboot:

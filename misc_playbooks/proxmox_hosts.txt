@@ -1,0 +1,4 @@
+[proxmox]
+192.168.2.252 ansible_ssh_private_key_file=~/.ssh/ansible-keys
+192.168.2.253 ansible_ssh_private_key_file=~/.ssh/ansible-keys
+192.168.2.254 ansible_ssh_private_key_file=~/.ssh/ansible-keys

@@ -1,0 +1,24 @@
+---
+- name: Update Proxmox Servers
+  hosts: hypervisors
+  remote_user: ansible
+  become: true
+  tasks:
+    - name: Update Package Cache (apt/Ubuntu)
+      tags: always
+      ansible.builtin.command:
+        cmd: pveupgrade
+    # Task to update Debian-based Linux distributions
+    - name: Update Debian-based Linux distributions
+      when: ansible_distribution in ['Debian', 'Ubuntu', 'LinuxMint']
+      ansible.builtin.apt:
+        upgrade: true
+        update_cache: true
+        cache_valid_time: 3600
+    - name: Check if beszel exists
+      ansible.builtin.stat:
+        path: /opt/beszel-agent/run-update.sh
+      register: script_file
+    - name: Run beszen update script if needed
+      ansible.builtin.command: /opt/beszel-agent/run-update.sh
+      when: script_file.stat.exists

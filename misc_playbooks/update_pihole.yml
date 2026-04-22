@@ -1,0 +1,12 @@
+---
+- name: Update Pihole
+  hosts: pihole
+  remote_user: ansible
+  become: true
+  tasks:
+    - name: Update Pihole to latest
+      shell: pihole -up
+    - name: Update Pihole Gravity
+      shell: pihole -g
+    - name: Restart DNS and flush cache
+      shell: pihole reloaddns

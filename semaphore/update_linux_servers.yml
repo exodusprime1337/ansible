@@ -1,0 +1,48 @@
+---
+- name: Update Linux Servers
+  hosts: servers
+  become: true
+  remote_user: ansible
+  tasks:
+    - name: Update Debian/Ubuntu systems
+      when: ansible_facts["os_family"] == "Debian"
+      block:
+        - name: Update apt cache
+          apt:
+            update_cache: yes
+            cache_valid_time: 3600
+        - name: Upgrade all packages
+          apt:
+            upgrade: dist
+        - name: Check if reboot is required
+          stat:
+            path: /var/run/reboot-required
+          register: reboot_required
+    - name: Update RHEL-based systems
+      when: ansible_facts["os_family"] == "RedHat"
+      block:
+        - name: Upgrade all packages
+          dnf:
+            name: "*"
+            state: latest
+        - name: Check if reboot is required
+          command: needs-restarting -r
+          register: reboot_required
+          failed_when: false
+          changed_when: false
+    - name: Reboot if required
+      reboot:
+        msg: "Reboot initiated by Ansible after updates"
+        reboot_timeout: 900
+      when:
+        - ansible_host != '192.168.2.50'
+        - reboot_required is defined
+        - reboot_required.stat.exists | default(false)
+          or reboot_required.rc | default(0) == 1
+    - name: Check if beszel exists
+      ansible.builtin.stat:
+        path: /opt/beszel-agent/run-update.sh
+      register: script_file
+    - name: Run beszen update script if needed
+      ansible.builtin.command: /opt/beszel-agent/run-update.sh
+      when: script_file.stat.exists

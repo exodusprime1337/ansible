@@ -1,0 +1,9 @@
+---
+- name: Uninstall Zabbix Agent
+  hosts: all
+  become: true
+  tasks:
+    - name: Kill Zabbix Agent
+      ansible.builtin.shell: |
+        killall -9 zabbix_agent2
+        apt purge zabbix-agent2 -y
