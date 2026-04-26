@@ -1,8 +1,9 @@
 ---
 - name: Update all Docker Swarm services to latest tagged images
   hosts: swarm_managers
-  become: true
-  gather_facts: false
+  become: yes
+  gather_facts: yes
+  remote_user: ansible
 
   tasks:
     - name: Get list of Docker services
