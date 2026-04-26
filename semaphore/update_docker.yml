@@ -5,20 +5,43 @@
   gather_facts: yes
   remote_user: ansible
 
+  vars:
+    excluded_services:
+      - ansible-semaphore_mysql
+      - ansible-semaphore_semaphore
+
   tasks:
     - name: Get list of Docker services
       ansible.builtin.command: docker service ls --format '{{ "{{.Name}}" }}'
       register: docker_services
       changed_when: false
 
-    - name: Update each service using current image tag
+    - name: Build filtered service list
+      ansible.builtin.set_fact:
+        services_to_update: >-
+          {{
+            docker_services.stdout_lines
+            | difference(excluded_services)
+          }}
+
+    - name: Show services being skipped
+      ansible.builtin.debug:
+        msg: "Skipping {{ item }}"
+      loop: "{{ excluded_services }}"
+
+    - name: Show services being updated
+      ansible.builtin.debug:
+        msg: "Updating {{ item }}"
+      loop: "{{ services_to_update }}"
+
+    - name: Update each allowed service using current image tag
       ansible.builtin.shell: |
         img=$(docker service inspect --format '{{ "{{.Spec.TaskTemplate.ContainerSpec.Image}}" }}' {{ item }})
         docker service update --detach=false --image "$img" {{ item }}
-      loop: "{{ docker_services.stdout_lines }}"
+      loop: "{{ services_to_update }}"
       register: update_results
       changed_when: true
 
-    - name: Show update results
+    - name: Summary
       ansible.builtin.debug:
         var: update_results.results
