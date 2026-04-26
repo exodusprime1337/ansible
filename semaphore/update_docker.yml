@@ -1,0 +1,23 @@
+---
+- name: Update all Docker Swarm services to latest tagged images
+  hosts: swarm_managers
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Get list of Docker services
+      ansible.builtin.command: docker service ls --format '{{ "{{.Name}}" }}'
+      register: docker_services
+      changed_when: false
+
+    - name: Update each service using current image tag
+      ansible.builtin.shell: |
+        img=$(docker service inspect --format '{{ "{{.Spec.TaskTemplate.ContainerSpec.Image}}" }}' {{ item }})
+        docker service update --detach=false --image "$img" {{ item }}
+      loop: "{{ docker_services.stdout_lines }}"
+      register: update_results
+      changed_when: true
+
+    - name: Show update results
+      ansible.builtin.debug:
+        var: update_results.results
