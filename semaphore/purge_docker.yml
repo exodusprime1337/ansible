@@ -17,3 +17,7 @@
     - name: Run docker volume prune (remove unused volumes)
       ansible.builtin.shell: docker volume prune -f
       when: docker_check.rc == 0
+
+    - name: Run docker image prune (remove unused images)
+      ansible.builtin.shell: docker image prune -a -f
+      when: docker_check.rc == 0
