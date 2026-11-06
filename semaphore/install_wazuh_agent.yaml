@@ -1,0 +1,75 @@
+---
+- name: Reinstall Wazuh Agent
+  hosts: hypervisors
+  become: yes
+  gather_facts: yes
+  remote_user: ansible
+
+  vars:
+    wazuh_manager: "192.168.2.131"
+    wazuh_version: "4.14.10-1"
+    wazuh_package: "wazuh-agent_{{ wazuh_version }}_amd64.deb"
+    wazuh_download_url: "https://packages.wazuh.com/4.x/apt/pool/main/w/wazuh-agent/{{ wazuh_package }}"
+    wazuh_temp_path: "/tmp/{{ wazuh_package }}"
+
+  tasks:
+    - name: Stop and disable existing Wazuh agent
+      ansible.builtin.systemd:
+        name: wazuh-agent
+        state: stopped
+        enabled: no
+      failed_when: false
+
+    - name: Purge existing Wazuh agent
+      ansible.builtin.apt:
+        name: wazuh-agent
+        state: absent
+        purge: yes
+        autoremove: yes
+        update_cache: no
+
+    - name: Remove leftover Wazuh configuration and data
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/ossec
+        - /etc/wazuh-agent
+
+    - name: Download Wazuh agent package
+      ansible.builtin.get_url:
+        url: "{{ wazuh_download_url }}"
+        dest: "{{ wazuh_temp_path }}"
+        mode: "0644"
+
+    - name: Install Wazuh agent and configure manager
+      ansible.builtin.apt:
+        deb: "{{ wazuh_temp_path }}"
+        state: present
+      environment:
+        WAZUH_MANAGER: "{{ wazuh_manager }}"
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Wazuh agent
+      ansible.builtin.systemd:
+        name: wazuh-agent
+        enabled: yes
+        state: started
+
+    - name: Verify Wazuh agent service
+      ansible.builtin.command: systemctl is-active wazuh-agent
+      register: wazuh_service_status
+      changed_when: false
+      failed_when: wazuh_service_status.stdout != "active"
+
+    - name: Display Wazuh installation status
+      ansible.builtin.debug:
+        msg: "Wazuh agent successfully reinstalled and running. Manager: {{ wazuh_manager }}"
+
+    - name: Remove downloaded package
+      ansible.builtin.file:
+        path: "{{ wazuh_temp_path }}"
+        state: absent

@@ -1,6 +1,6 @@
 ---
 - name: Update Linux Servers
-  hosts: servers
+  hosts: all
   become: true
   remote_user: ansible
   tasks:
