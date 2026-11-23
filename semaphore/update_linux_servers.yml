@@ -14,6 +14,9 @@
         - name: Upgrade all packages
           apt:
             upgrade: dist
+        - name: Autoremove unnecessary packages
+          apt:
+            autoremove: yes
         - name: Check if reboot is required
           stat:
             path: /var/run/reboot-required
@@ -39,10 +42,3 @@
         - reboot_required is defined
         - reboot_required.stat.exists | default(false)
           or reboot_required.rc | default(0) == 1
-    - name: Check if beszel exists
-      ansible.builtin.stat:
-        path: /opt/beszel-agent/run-update.sh
-      register: script_file
-    - name: Run beszen update script if needed
-      ansible.builtin.command: /opt/beszel-agent/run-update.sh
-      when: script_file.stat.exists
